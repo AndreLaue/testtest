@@ -1,5 +1,5 @@
 openapi: 3.0.0 # OpenAPI-Version (erlaubte Features und Syntax)
-
+# Zum Test
 info:  # Allgemeine Infos zur Schnittstelle
   title: Energiemenge auf Ebene der Marktlokation API 
   version: 1.0.0  

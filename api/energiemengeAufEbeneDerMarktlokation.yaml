@@ -1,0 +1,241 @@
+openapi: 3.0.0 # OpenAPI-Version (erlaubte Features und Syntax)
+
+info:  # Allgemeine Infos zur Schnittstelle
+  title: Energiemenge auf Ebene der Marktlokation API 
+  version: 1.0.0  
+  description: API zum Übermitteln von Energiemengen auf Ebene der Marktlokation. 
+
+servers:  # URLs unter der die API bereitsteht
+  - url: https://github.com/EDI-Energy/apis-demo/blob/main/api/energiemengeAufEbeneDerMarktlokation.yaml
+    description: GitHub-Server der EDI@Energy. 
+
+paths:  # Definition aller Endpunkte und wie sie angesprochen werden können
+  /uebermittlungEnergiemengeMaLo/v1: 
+    post:  # HTTP-Methode: POST, weil Daten übermittelt werden sollen
+           # Weitere HTTP-Methoden
+           # GET Die GET-Methode fordert eine Darstellung der angegebenen Ressource an. Anfragen mit GET sollten nur Daten abrufen und keinen Anforderungs-Inhalt enthalten.
+           # POST Die POST-Methode übermittelt eine Entität an die angegebene Ressource, was oft eine Zustandsänderung oder Seiteneffekte auf dem Server verursacht.
+           # PUT Die PUT-Methode ersetzt alle aktuellen Darstellungen der Zielressource mit dem Anforderungs-Inhalt.
+           # DELETE Die DELETE-Methode löscht die angegebene Ressource.
+           # PATCH Die PATCH-Methode wendet partielle Änderungen auf eine Ressource an.
+
+      tags:
+        - EnergiemengeAufEbeneMarktlokation
+      summary: Energiemenge auf Ebene der Marktlokation 
+      description: Übermittelt die Energiemenge auf Ebene der Marktlokation. 
+
+      parameters:  # Parameter definieren welche Eingaben erwartet werden 
+        - name: transactionId 
+          in: header  # Ort des Parameters (in query, path, header oder cookie möglich)
+          description: Externe Transaktions-Id zur eindeutigen Identifikation der Anfrage der MaLo-ID der Marktlokation des sendenden Marktpartners.
+          required: true  
+          style: simple 
+          explode: false 
+          schema:
+            $ref: '#/components/schemas/transactionId'  # Verweis auf Schema
+
+        - name: creationDateTime
+          in: header
+          description: Zeitpunkt, an dem der Aufruf erstellt wurde
+          required: true
+          style: simple
+          explode: false
+          schema:
+            $ref: '#/components/schemas/creationDateTime'
+
+        - name: initialTransactionId
+          in: header
+          description: Zur Angabe des Idempotenzschlüssels im Falle eines Retry.
+          required: false 
+          style: simple
+          explode: false
+          schema:
+            $ref: '#/components/schemas/initialTransactionId'
+
+      requestBody:  # Inhalt des POST-Befehls (welche Informationen übermittelt werden)
+        required: true 
+        content:
+          application/json:  # Teilt dem Server mit, welches Format die gesendeten Daten haben (JSON)
+            schema:
+              $ref: '#/components/schemas/dataTransferEnergyQuantities' 
+
+      responses:  # Mögliche Antworten mit Statuscodes
+        "202":  
+          description: accepted
+        "400":  
+          description: Bad Request
+        "401":  
+          description: Unauthorized
+        "404":  
+          description: Not Found
+        "405": 
+          description: Method not allowed
+        "500": 
+          description: Internal Server Error
+
+components:  # Hier werden die verwendeten Schemas definiert ("Anhang")
+  schemas:
+    transactionId:
+      type: string
+      description: Transaktions-ID
+      example: "123e4567-e89b-12d3-a456-426614174000"
+    creationDateTime:
+      type: string
+      format: date-time
+      description: Zeitpunkt der Erstellung des Aufrufs
+      example: "2025-04-24T10:00:00Z"
+    initialTransactionId:
+      type: string
+      description: Idempotenz-Schlüssel für Retries
+      example: "123e4567-e89b-12d3-a456-426614174001"
+    obisCode:
+      type: string 
+      description: Identifikator eines Messwerts (OBIS-Code)
+      example: "1-0.1.9.0"
+    qualityMeasuredValue:
+      type: string
+      description: Messwertqualität der Energiemenge
+      enum:
+        - Wahrer Wert
+        - Ersatzwert
+        - Vorschlagswert
+        - Nicht verwendbarer Wert
+        - Prognosewert
+        - Vorläufiger Wert
+    energyQuantity:
+      type: number
+      format: double
+      description: Zahl mit Nachkommastelle
+      example: 1234.576
+    startMeasurementPeriod:
+      type: string
+      format: date-time
+      description: Beginn der Messperiode (00:00 Uhr eines Tages)
+      example: "2025-04-24T00:00:00Z"
+    endMeasurementPeriod:
+      type: string
+      format: date-time
+      description: Ende der Messperiode (00:00 Uhr eines Tages)
+      example: "2025-04-24T00:00:00Z"
+    maloId:
+      pattern: "\\d{11}"
+      type: string
+      description: Identifiziert die Marktlokation mittels einer eindeutigen ID
+      example: "57685676748"
+    plausibilityCheck:
+      type: string
+      description: Plausibilisierungshinweis
+      enum:
+        - Kundenselbstablesung
+        - Leerstand
+        - Realer Zählerüberlauf geprüft
+        - Plausibel wegen Kontrollablesung
+        - Plausibel wegen Kundenhinweis
+        - Austausch des Ersatzwertes
+        - Rechenwert
+    substituteValueFormationMethod:
+      type: string
+      description: Ersatzwertbildungsverfahren
+      enum:
+        - Vergleichsmessung (nicht geeicht)
+        - Messwertnachbildung aus geeichten Werten 
+        - Messwertnachbildung aus nicht geeichten Werten 
+        - Interpolation
+        - Haltewert
+        - Bilanzierung Netzabschnitt
+        - Historische Messwerte
+        - Aufteilung
+        - Verwendung von Werten des Störmengenzählwerks
+        - Umgangs- und Korrekurmengen
+        - Ersatzwertbildungsverfahren gemäß Angaben auf Ebene der Messlokation
+    reasonOfCorrection:
+      type: string
+      description: Korrekturgrund
+      enum:
+        - Kein Zugang
+        - Kommunikationsstörung
+        - Netzausfall
+        - Gerätewechsel
+        - Gerät arbeitet außerhalb der Betriebsbedingungen 
+        - Messeinrichtung gestört / defekt
+        - Unsicherheit Messung 
+        - Berücksichtigung Störmengenzählwerk
+        - Mengenumwertung unvollständig
+        - Uhrzeit gestellt / Synchronisation
+        - Messwert unplausibel 
+        - Fehlerhafte Ablesung
+        - Änderung der Berechnung
+        - Umbau der Messlokation
+        - Datenbearbeitungsfehler
+        - Brennwertkorrektur
+        - Z-Zahl-Korrektur
+        - Störung / Defekt Messeinrichtung
+        - Impulswertigkeit nicht ausreichend
+        - Wartungsarbeiten an geeichtem Messgerät 
+        - Gestörte Werte
+        - Wartungsarbeiten an eichrechtskonformen Messgeräten 
+        - Konsistenz- und Synchronisationprüfung
+    reasonOfSubstituteValueFormation:
+      type: string
+      description: Grund der Ersatzwertbildung
+      enum:
+        - Kein Zugang
+        - Kommunikationsstörung
+        - Netzausfall
+        - Gerätewechsel
+        - Gerät arbeitet außerhalb der Betriebsbedingungen
+        - Messeinrichtung gestört/defekt
+        - Unsicherheit Messung
+        - Berücksichtigung Störmengenzählwerk
+        - Mengenumwertung unvollständig
+        - Uhrzeit gestellt/Synchronisation
+        - Messwert unplausibel
+        - Fehlerhafte Ablesung
+        - Änderung der Berechnung
+        - Umbau der Messlokation
+        - Datenbearbeitungsfehler
+        - Störung / Defekt Messeinrichtung
+        - Impulswertigkeit nicht ausreichend
+        - Wartungsarbeiten an geeichtem Messgerät
+        - gestörte Werte
+        - Wartungsarbeiten an eichrechtskonformen Messgeräten
+        - Konsistenz- und Synchronprüfung
+    energyQuantityMeasurement:
+      type: object
+      description: Parameter, die einer bestimmten Messperiode zugeordnet werden können.
+      properties:
+        obisCode:
+          $ref: '#/components/schemas/obisCode'
+        qualityMeasuredValue:
+          $ref: '#/components/schemas/qualityMeasuredValue'
+        energyQuantity:
+          $ref: "#/components/schemas/energyQuantity"
+        plausibilityCheck:
+          $ref: "#/components/schemas/plausibilityCheck"
+        substituteValueFormationMethod:
+          $ref: "#/components/schemas/substituteValueFormationMethod"
+        reasonOfCorrection:
+          $ref: '#/components/schemas/reasonOfCorrection'
+        reasonOfSubstituteValueFormation:
+          $ref: '#/components/schemas/reasonOfSubstituteValueFormation'
+      required:
+        - obisCode
+        - qualityMeasuredValue
+        - energyQuantity
+    dataTransferEnergyQuantities:
+      type: array
+      description: Parameter, die zur Übermittlung von Energiemengen auf Ebene der Marktlokation übergeben werden (inklusive der Angabe der Messperiode).
+      items:
+        type: object
+        properties:
+          startMeasurementPeriod:
+            $ref: "#/components/schemas/startMeasurementPeriod"
+          endMeasurementPeriod:
+            $ref: "#/components/schemas/endMeasurementPeriod"
+          energyQuantityMeasurement:
+            type: array
+            items:
+              $ref: "#/components/schemas/energyQuantityMeasurement"
+      required:
+       - startMeasurementPeriod
+       - endMeasurementPeriod

@@ -3,5 +3,4 @@ components:
     city:
       type: string
       description: Angabe des Ortes der Marktlokationsadresse
-      example: Magdeburg
-# H    
+      example: Magdeburg  
